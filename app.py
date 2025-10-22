@@ -84,9 +84,12 @@ if img_file_buffer is not None:
 
     # 🔮 Predicción
     prediction = model.predict(data)
-    labels = ["Izquierda 👈", "Arriba 👆", "Derecha 👉", "Abajo 👇"]
 
-    # 🎯 Mostrar resultados
+    # 🎯 Crear etiquetas dinámicamente
+    num_classes = prediction.shape[1]
+    labels = [f"Clase {i+1}" for i in range(num_classes)]
+
+    # 🎯 Mostrar resultados principales
     max_idx = np.argmax(prediction[0])
     gesture = labels[max_idx]
     confidence = float(prediction[0][max_idx])
@@ -99,15 +102,16 @@ if img_file_buffer is not None:
     </div>
     """, unsafe_allow_html=True)
 
-    # 🌈 Mostrar barras de probabilidad
-    st.markdown("### ✨ Probabilidades")
+    # 🌈 Mostrar barras de probabilidad dinámicamente
+    st.markdown("### ✨ Probabilidades detectadas")
     for i, label in enumerate(labels):
-        st.progress(float(prediction[0][i]))
-        st.write(f"**{label}:** {prediction[0][i]:.2%}")
+        prob = float(prediction[0][i])
+        st.progress(min(max(prob, 0), 1))
+        st.write(f"**{label}:** {prob:.2%}")
 
     # 🔊 Generar audio del resultado
     try:
-        tts_text = f"El gesto detectado es {gesture.replace('👈','izquierda').replace('👆','arriba').replace('👉','derecha').replace('👇','abajo')}"
+        tts_text = f"El gesto detectado es {gesture}"
         tts = gTTS(text=tts_text, lang='es')
         audio_bytes = io.BytesIO()
         tts.write_to_fp(audio_bytes)
@@ -115,4 +119,5 @@ if img_file_buffer is not None:
         st.audio(audio_bytes, format="audio/mp3")
     except Exception as e:
         st.warning(f"No se pudo reproducir el audio: {e}")
+
 
